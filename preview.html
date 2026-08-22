@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Website Preview - WebCraft AI</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #09090b;
+            color: white;
+        }
+
+        .topbar {
+            height: 65px;
+            background: #15151c;
+            border-bottom: 1px solid #292934;
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            padding: 0 15px;
+        }
+
+        .brand {
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        button {
+            border: none;
+            border-radius: 8px;
+            padding: 10px 14px;
+            color: white;
+            background: #27272a;
+            cursor: pointer;
+        }
+
+        .primary {
+            background: #8b5cf6;
+        }
+
+        .preview-container {
+            width: 100%;
+            height: calc(100vh - 65px);
+            padding: 15px;
+        }
+
+        #websiteFrame {
+            width: 100%;
+            height: 100%;
+            border: none;
+            border-radius: 12px;
+            background: white;
+        }
+
+        .loading {
+            position: fixed;
+            inset: 65px 0 0 0;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            background: #09090b;
+            z-index: 10;
+        }
+
+        .loading-content {
+            text-align: center;
+        }
+
+        .spinner {
+            width: 45px;
+            height: 45px;
+
+            border: 4px solid #27272a;
+            border-top-color: #8b5cf6;
+
+            border-radius: 50%;
+
+            animation: spin 1s linear infinite;
+
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @media (max-width: 600px) {
+
+            .brand {
+                font-size: 15px;
+            }
+
+            button {
+                padding: 8px 10px;
+                font-size: 12px;
+            }
+
+            .preview-container {
+                padding: 8px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header class="topbar">
+
+        <div class="brand">
+            ✨ WebCraft AI
+        </div>
+
+        <div class="actions">
+
+            <button onclick="goBack()">
+                ← Back
+            </button>
+
+            <button onclick="regenerate()">
+                🔄 Regenerate
+            </button>
+
+            <button class="primary" onclick="downloadWebsite()">
+                ⬇ Download
+            </button>
+
+        </div>
+
+    </header>
+
+
+    <div class="loading" id="loading">
+
+        <div class="loading-content">
+
+            <div class="spinner"></div>
+
+            <h2>Loading your website...</h2>
+
+            <p>
+                WebCraft AI is preparing your creation.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <main class="preview-container">
+
+        <iframe
+            id="websiteFrame"
+            sandbox="allow-scripts allow-forms"
+            title="Generated Website Preview">
+        </iframe>
+
+    </main>
+
+
+    <script>
+
+        const website =
+            localStorage.getItem("generatedWebsite");
+
+        const originalPrompt =
+            localStorage.getItem("websitePrompt");
+
+
+        // Make sure a website exists
+        if (!website) {
+
+            alert("No generated website was found.");
+
+            window.location.href = "index.html";
+
+        } else {
+
+            const frame =
+                document.getElementById("websiteFrame");
+
+            frame.srcdoc = website;
+
+            frame.onload = function () {
+
+                document.getElementById("loading")
+                    .style.display = "none";
+
+            };
+
+        }
+
+
+        function goBack() {
+
+            window.location.href = "index.html";
+
+        }
+
+
+        function regenerate() {
+
+            if (originalPrompt) {
+
+                localStorage.setItem(
+                    "regeneratePrompt",
+                    originalPrompt
+                );
+
+            }
+
+            window.location.href = "index.html";
+
+        }
+
+
+        function downloadWebsite() {
+
+            const blob = new Blob(
+                [website],
+                {
+                    type: "text/html"
+                }
+            );
+
+            const url =
+                URL.createObjectURL(blob);
+
+            const link =
+                document.createElement("a");
+
+            link.href = url;
+
+            link.download =
+                "my-website.html";
+
+            document.body.appendChild(link);
+
+            link.click();
+
+            document.body.removeChild(link);
+
+            URL.revokeObjectURL(url);
+
+        }
+
+    </script>
+
+</body>
+  </html>
