@@ -1,0 +1,8 @@
+{
+  "name": "ai-website-maker",
+  "main": "worker.js",
+  "compatibility_date": "2026-08-22",
+  "ai": {
+    "binding": "AI"
+  }
+}
