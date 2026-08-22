@@ -7,7 +7,6 @@ export default {
       "Access-Control-Allow-Headers": "Content-Type"
     };
 
-    // Allow the browser to communicate with the Worker
     if (request.method === "OPTIONS") {
       return new Response(null, {
         status: 204,
@@ -15,7 +14,6 @@ export default {
       });
     }
 
-    // Only accept POST requests
     if (request.method !== "POST") {
       return new Response(
         JSON.stringify({
@@ -41,7 +39,7 @@ export default {
         return new Response(
           JSON.stringify({
             success: false,
-            error: "Please describe the website you want."
+            error: "Please provide a website description."
           }),
           {
             status: 400,
@@ -56,29 +54,22 @@ export default {
       const systemPrompt = `
 You are WebCraft AI, an expert website designer and developer.
 
-Create a complete website based on the user's request.
+Create a complete, beautiful, responsive website based on the user's request.
 
-RULES:
-
-- Return ONLY the complete HTML document.
+IMPORTANT:
+- Return ONLY HTML.
 - Start with <!DOCTYPE html>.
-- Include CSS inside a <style> tag.
-- Include JavaScript inside a <script> tag when useful.
-- Make the website responsive on phones, tablets and computers.
-- Make the design modern and professional.
-- Use attractive typography, spacing, colors, buttons and sections.
-- Create realistic content based on the user's request.
-- Include navigation when appropriate.
-- Include a hero section when appropriate.
-- Include appropriate sections such as About, Services,
-  Features, Gallery, Pricing and Contact when appropriate.
-- Make buttons functional when possible.
-- Do not explain the code.
+- Include CSS inside <style>.
+- Include JavaScript inside <script> when useful.
+- Make it mobile responsive.
+- Make navigation and buttons functional where possible.
+- Include realistic content.
 - Do not use Markdown.
 - Do not use code fences.
-- Return ONLY HTML.
+- Do not explain anything.
 
 USER REQUEST:
+${userPrompt}
 `;
 
       const result = await env.AI.run(
@@ -99,14 +90,35 @@ USER REQUEST:
         }
       );
 
+      console.log("AI RESULT:", JSON.stringify(result));
+
       let website = result.response || "";
 
-      // Remove accidental Markdown code fences
+      if (typeof website !== "string") {
+        website = JSON.stringify(website);
+      }
+
       website = website
         .replace(/^```html\s*/i, "")
         .replace(/^```\s*/i, "")
         .replace(/\s*```$/i, "")
         .trim();
+
+      if (!website || website.length < 50) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: "AI returned an empty website."
+          }),
+          {
+            status: 500,
+            headers: {
+              "Content-Type": "application/json",
+              ...corsHeaders
+            }
+          }
+        );
+      }
 
       return new Response(
         JSON.stringify({
@@ -124,12 +136,12 @@ USER REQUEST:
 
     } catch (error) {
 
-      console.error(error);
+      console.error("AI ERROR:", error);
 
       return new Response(
         JSON.stringify({
           success: false,
-          error: "AI generation failed."
+          error: error.message || "AI generation failed."
         }),
         {
           status: 500,
