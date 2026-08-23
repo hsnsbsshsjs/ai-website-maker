@@ -35,11 +35,11 @@ export default {
       const body = await request.json();
       const userPrompt = body.prompt;
 
-      if (!userPrompt || typeof userPrompt !== "string") {
+      if (!userPrompt) {
         return new Response(
           JSON.stringify({
             success: false,
-            error: "Please provide a website description."
+            error: "No website prompt was provided."
           }),
           {
             status: 400,
@@ -54,19 +54,20 @@ export default {
       const systemPrompt = `
 You are WebCraft AI, an expert website designer and developer.
 
-Create a complete, beautiful, responsive website based on the user's request.
+Create a complete website based on the user's request.
 
-IMPORTANT:
-- Return ONLY HTML.
-- Start with <!DOCTYPE html>.
-- Include CSS inside <style>.
-- Include JavaScript inside <script> when useful.
-- Make it mobile responsive.
-- Make navigation and buttons functional where possible.
+RULES:
+- Return ONLY the complete HTML.
+- Start with <!DOCTYPE html>
+- Include all CSS inside <style>.
+- Include JavaScript inside <script>.
+- Make the website responsive on phones and computers.
+- Make navigation buttons functional.
+- Use beautiful modern design.
 - Include realistic content.
-- Do not use Markdown.
-- Do not use code fences.
-- Do not explain anything.
+- Do NOT use Markdown.
+- Do NOT use code fences.
+- Do NOT explain anything.
 
 USER REQUEST:
 ${userPrompt}
@@ -90,25 +91,47 @@ ${userPrompt}
         }
       );
 
-      console.log("AI RESULT:", JSON.stringify(result));
+      console.log("FULL AI RESULT:", JSON.stringify(result));
 
-      let website = result.response || "";
+      // Handle different Workers AI response formats
+      let website = "";
+
+      if (
+        result &&
+        result.choices &&
+        result.choices[0] &&
+        result.choices[0].message
+      ) {
+        website = result.choices[0].message.content || "";
+      }
+
+      if (!website && result && result.response) {
+        website = result.response;
+      }
+
+      if (!website && result && result.output_text) {
+        website = result.output_text;
+      }
 
       if (typeof website !== "string") {
         website = JSON.stringify(website);
       }
 
+      // Remove Markdown code fences if the AI added them
       website = website
         .replace(/^```html\s*/i, "")
         .replace(/^```\s*/i, "")
         .replace(/\s*```$/i, "")
         .trim();
 
+      console.log("GENERATED WEBSITE LENGTH:", website.length);
+
       if (!website || website.length < 50) {
         return new Response(
           JSON.stringify({
             success: false,
-            error: "AI returned an empty website."
+            error: "AI returned an empty website.",
+            debug: result
           }),
           {
             status: 500,
@@ -141,7 +164,7 @@ ${userPrompt}
       return new Response(
         JSON.stringify({
           success: false,
-          error: error.message || "AI generation failed."
+          error: error.message || "Website generation failed."
         }),
         {
           status: 500,
