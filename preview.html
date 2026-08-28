@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>WebCraft AI — Editor</title>
+    <title>WebCraft AI - Preview</title>
 
     <style>
         * {
@@ -14,186 +14,217 @@
         body {
             margin: 0;
             font-family: Arial, sans-serif;
-            background: #09090b;
+            background: #0b0b10;
             color: white;
-            overflow: hidden;
         }
 
-        .toolbar {
-            height: 64px;
-            background: #151518;
-            border-bottom: 1px solid #29292f;
+        /* TOP BAR */
+
+        .topbar {
+            height: 70px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 15px;
-            gap: 10px;
+            padding: 0 20px;
+            background: #111118;
+            border-bottom: 1px solid #292932;
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
 
         .logo {
-            font-size: 19px;
+            font-size: 20px;
             font-weight: bold;
-            white-space: nowrap;
         }
 
         .logo span {
-            color: #8b5cf6;
+            color: #9b5cff;
         }
 
-        .actions {
+        .top-buttons {
             display: flex;
-            gap: 7px;
+            gap: 10px;
         }
 
         button {
             border: none;
-            border-radius: 8px;
-            padding: 9px 13px;
-            background: #27272a;
-            color: white;
-            font-weight: bold;
             cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
         }
 
-        button:hover {
-            background: #3f3f46;
+        .back-btn {
+            background: #22222b;
+            color: white;
+            padding: 11px 16px;
+            border-radius: 10px;
         }
 
-        .purple {
-            background: #8b5cf6;
+        .download-btn {
+            background: #9b5cff;
+            color: white;
+            padding: 11px 16px;
+            border-radius: 10px;
         }
 
-        .purple:hover {
-            background: #7c3aed;
-        }
+        /* EDIT PANEL */
 
         .editor {
-            position: fixed;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: #151518;
-            border-top: 1px solid #29292f;
-            padding: 10px;
-            z-index: 20;
+            padding: 18px;
+            background: #111118;
+            border-bottom: 1px solid #292932;
         }
 
-        .editor-row {
+        .editor-title {
+            font-size: 17px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .edit-row {
             display: flex;
-            gap: 8px;
-            max-width: 1100px;
+            gap: 10px;
+            max-width: 1000px;
             margin: auto;
         }
 
         #editPrompt {
             flex: 1;
-            min-height: 45px;
-            max-height: 120px;
+            min-height: 50px;
             resize: vertical;
-            border: 1px solid #3f3f46;
-            border-radius: 9px;
-            background: #09090b;
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid #34343e;
+            background: #191920;
             color: white;
-            padding: 12px;
             outline: none;
-            font-size: 14px;
+            font-size: 15px;
         }
 
         #editPrompt:focus {
-            border-color: #8b5cf6;
+            border-color: #9b5cff;
         }
 
         #editBtn {
-            align-self: flex-end;
-            min-height: 45px;
+            background: #9b5cff;
+            color: white;
+            padding: 0 22px;
+            border-radius: 12px;
+            min-width: 140px;
         }
 
-        .preview {
-            position: fixed;
-            top: 64px;
-            left: 0;
-            right: 0;
-            bottom: 72px;
+        #editBtn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* STATUS */
+
+        #status {
+            text-align: center;
+            padding: 12px;
+            font-size: 14px;
+            color: #bdbdc8;
+            min-height: 40px;
+        }
+
+        /* PREVIEW */
+
+        .preview-wrapper {
+            background: #222;
+            padding: 20px;
+            min-height: calc(100vh - 190px);
+        }
+
+        .preview-container {
             background: white;
+            width: 100%;
+            max-width: 1400px;
+            margin: auto;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
         }
 
         #websitePreview {
             width: 100%;
-            height: 100%;
+            height: 75vh;
             border: none;
             display: block;
             background: white;
         }
 
-        .status {
-            text-align: center;
-            font-size: 12px;
-            color: #a1a1aa;
-            margin-top: 7px;
-            min-height: 15px;
-        }
+        /* EMPTY STATE */
 
-        .loading {
-            position: fixed;
-            top: 64px;
-            left: 0;
-            right: 0;
-            bottom: 72px;
-            background: rgba(9, 9, 11, 0.92);
-            display: none;
-            align-items: center;
+        .empty {
+            min-height: 70vh;
+            display: flex;
+            flex-direction: column;
             justify-content: center;
-            z-index: 30;
+            align-items: center;
             text-align: center;
+            padding: 30px;
         }
 
-        .spinner {
-            width: 42px;
-            height: 42px;
-            border: 4px solid #27272a;
-            border-top-color: #8b5cf6;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: auto;
+        .empty h2 {
+            font-size: 28px;
+            margin-bottom: 10px;
         }
 
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
+        .empty p {
+            color: #aaa;
+            margin-bottom: 20px;
         }
 
-        @media (max-width: 600px) {
+        .create-btn {
+            background: #9b5cff;
+            color: white;
+            padding: 13px 22px;
+            border-radius: 10px;
+        }
 
-            .toolbar {
-                height: 58px;
-                padding: 0 8px;
+        /* MOBILE */
+
+        @media (max-width: 700px) {
+
+            .topbar {
+                height: auto;
+                padding: 14px;
+                gap: 10px;
+                flex-wrap: wrap;
             }
 
             .logo {
-                font-size: 15px;
+                font-size: 18px;
             }
 
-            .actions button {
-                padding: 7px 8px;
-                font-size: 11px;
+            .top-buttons {
+                width: 100%;
             }
 
-            .preview {
-                top: 58px;
-                bottom: 78px;
+            .top-buttons button {
+                flex: 1;
             }
 
             .editor {
-                padding: 8px;
+                padding: 14px;
             }
 
-            .editor-row {
+            .edit-row {
                 flex-direction: column;
             }
 
             #editBtn {
-                width: 100%;
+                min-height: 50px;
+            }
+
+            .preview-wrapper {
+                padding: 8px;
+            }
+
+            #websitePreview {
+                height: 70vh;
             }
         }
     </style>
@@ -201,24 +232,26 @@
 
 <body>
 
-    <header class="toolbar">
+    <!-- TOP BAR -->
+
+    <header class="topbar">
 
         <div class="logo">
             ✨ WebCraft <span>AI</span>
         </div>
 
-        <div class="actions">
+        <div class="top-buttons">
 
-            <button onclick="goBack()">
-                ← Edit
+            <button
+                class="back-btn"
+                onclick="goBack()">
+                ← Back
             </button>
 
-            <button onclick="refreshPreview()">
-                ↻
-            </button>
-
-            <button onclick="downloadWebsite()">
-                ⬇
+            <button
+                class="download-btn"
+                onclick="downloadWebsite()">
+                📥 Download
             </button>
 
         </div>
@@ -226,53 +259,76 @@
     </header>
 
 
-    <main class="preview">
-
-        <iframe
-            id="websitePreview"
-            title="Generated Website">
-        </iframe>
-
-    </main>
-
-
-    <div class="loading" id="loading">
-
-        <div>
-
-            <div class="spinner"></div>
-
-            <p>🧠 AI is editing your website...</p>
-
-        </div>
-
-    </div>
-
+    <!-- AI EDITOR -->
 
     <section class="editor">
 
-        <div class="editor-row">
+        <div class="editor-title">
+            ✏️ Edit your website with AI
+        </div>
+
+        <div class="edit-row">
 
             <textarea
                 id="editPrompt"
-                placeholder="Tell AI what you want to change... Example: Make the buttons blue and change the hero title to 'Welcome to Cyrus Cuts'."
+                placeholder="Tell AI what you want to change...
+
+Example:
+Change the colors to green and white.
+Add a WhatsApp button.
+Make the hero section more attractive.
+Add a pricing section."
             ></textarea>
 
             <button
                 id="editBtn"
-                class="purple"
                 onclick="editWebsite()">
-                ✨ Edit with AI
+                ✨ Edit Website
             </button>
 
         </div>
 
-        <div
-            class="status"
-            id="status">
-        </div>
+        <div id="status"></div>
 
     </section>
+
+
+    <!-- WEBSITE PREVIEW -->
+
+    <main class="preview-wrapper">
+
+        <div
+            id="emptyState"
+            class="empty"
+            style="display:none;">
+
+            <h2>No website found</h2>
+
+            <p>
+                Generate a website first before opening the preview.
+            </p>
+
+            <button
+                class="create-btn"
+                onclick="goBack()">
+                ✨ Create Website
+            </button>
+
+        </div>
+
+
+        <div
+            id="previewContainer"
+            class="preview-container">
+
+            <iframe
+                id="websitePreview"
+                title="Generated Website">
+            </iframe>
+
+        </div>
+
+    </main>
 
 
     <script>
@@ -280,7 +336,7 @@
         const AI_URL =
             "https://ai-website-maker.lutaayacyrus76.workers.dev/";
 
-        const iframe =
+        const preview =
             document.getElementById("websitePreview");
 
         const editPrompt =
@@ -292,76 +348,63 @@
         const status =
             document.getElementById("status");
 
-        const loading =
-            document.getElementById("loading");
+        const previewContainer =
+            document.getElementById("previewContainer");
+
+        const emptyState =
+            document.getElementById("emptyState");
 
 
-        function getWebsite() {
+        /* LOAD GENERATED WEBSITE */
 
-            return localStorage.getItem(
-                "generatedWebsite"
-            );
-
-        }
+        let website =
+            localStorage.getItem("generatedWebsite");
 
 
-        function loadWebsite() {
+        if (!website) {
 
-            const website = getWebsite();
+            previewContainer.style.display = "none";
+            emptyState.style.display = "flex";
 
-            if (!website) {
+        } else {
 
-                status.textContent =
-                    "⚠️ No website found. Go back and create one.";
-
-                return;
-
-            }
-
-            iframe.srcdoc = website;
+            preview.srcdoc = website;
 
         }
 
+
+        /* EDIT WEBSITE */
 
         async function editWebsite() {
 
             const instruction =
                 editPrompt.value.trim();
 
-            const currentWebsite =
-                getWebsite();
-
-
-            if (!currentWebsite) {
-
-                status.textContent =
-                    "⚠️ No website found.";
-
-                return;
-
-            }
-
-
             if (!instruction) {
 
                 status.textContent =
-                    "⚠️ Tell AI what you want to change.";
+                    "⚠️ Tell the AI what you want to change.";
 
                 return;
+            }
 
+
+            if (!website) {
+
+                status.textContent =
+                    "❌ No website is available to edit.";
+
+                return;
             }
 
 
             editBtn.disabled = true;
 
             editBtn.textContent =
-                "🧠 Editing...";
-
-            loading.style.display =
-                "flex";
+                "✨ Editing...";
 
             status.textContent =
-                "AI is updating your website...";
+                "🧠 AI is updating your website...";
 
 
             try {
@@ -372,8 +415,7 @@
                         method: "POST",
 
                         headers: {
-                            "Content-Type":
-                                "application/json"
+                            "Content-Type": "application/json"
                         },
 
                         body: JSON.stringify({
@@ -382,7 +424,7 @@
 
                             prompt: instruction,
 
-                            website: currentWebsite
+                            website: website
 
                         })
 
@@ -393,31 +435,47 @@
                     await response.json();
 
 
-                if (!response.ok ||
-                    !data.success) {
+                if (!response.ok || !data.success) {
 
                     throw new Error(
                         data.error ||
-                        "AI editing failed."
+                        "Website editing failed."
                     );
 
                 }
 
 
+                /* UPDATE WEBSITE */
+
+                website =
+                    data.website;
+
+
+                /* SAVE UPDATED WEBSITE */
+
                 localStorage.setItem(
                     "generatedWebsite",
-                    data.website
+                    website
                 );
 
 
-                iframe.srcdoc =
-                    data.website;
+                localStorage.setItem(
+                    "websitePrompt",
+                    instruction
+                );
+
+
+                /* UPDATE PREVIEW */
+
+                preview.srcdoc =
+                    website;
 
 
                 editPrompt.value = "";
 
+
                 status.textContent =
-                    "✅ Website updated!";
+                    "✅ Website updated successfully!";
 
 
             } catch (error) {
@@ -432,37 +490,21 @@
                 editBtn.disabled = false;
 
                 editBtn.textContent =
-                    "✨ Edit with AI";
-
-                loading.style.display =
-                    "none";
+                    "✨ Edit Website";
 
             }
 
         }
 
 
-        function refreshPreview() {
-
-            loadWebsite();
-
-        }
-
-
-        function goBack() {
-
-            window.location.href =
-                "index.html";
-
-        }
-
+        /* DOWNLOAD WEBSITE */
 
         function downloadWebsite() {
 
-            const website =
-                getWebsite();
-
             if (!website) {
+
+                alert("No website available to download.");
+
                 return;
             }
 
@@ -487,7 +529,7 @@
             link.href = url;
 
             link.download =
-                "my-website.html";
+                "webcraft-website.html";
 
 
             document.body.appendChild(link);
@@ -501,9 +543,35 @@
         }
 
 
-        loadWebsite();
+        /* BACK TO CREATOR */
+
+        function goBack() {
+
+            window.location.href =
+                "index.html";
+
+        }
+
+
+        /* CTRL + ENTER TO EDIT */
+
+        editPrompt.addEventListener(
+            "keydown",
+            function(event) {
+
+                if (
+                    event.ctrlKey &&
+                    event.key === "Enter"
+                ) {
+
+                    editWebsite();
+
+                }
+
+            }
+        );
 
     </script>
 
 </body>
-</html>
+    </html>
