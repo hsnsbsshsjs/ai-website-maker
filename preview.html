@@ -1,258 +1,117 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WebCraft AI - Preview</title>
-<style>
-*{box-sizing:border-box}
-body{margin:0;font-family:Arial,sans-serif;background:#0b0b10;color:#fff}
-.topbar{min-height:60px;display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:#111118;border-bottom:1px solid #292932;position:sticky;top:0;z-index:100}
-.logo{font-size:18px;font-weight:bold}.logo span{color:#9b5cff}
-.top-buttons{display:flex;gap:8px;flex-wrap:wrap}
-button{border:none;cursor:pointer;font-size:13px;font-weight:bold;transition:.2s;border-radius:10px;padding:10px 14px}
-button:hover{transform:translateY(-1px);opacity:.92}
-button:disabled{opacity:.5;cursor:not-allowed;transform:none}
-.back-btn{background:#22222b;color:#fff}
-.download-btn{background:#9b5cff;color:#fff}
-.publish-btn{background:#16a34a;color:#fff}
-.editor{padding:16px;background:#111118;border-bottom:1px solid #292932}
-.editor-title{font-size:16px;font-weight:bold;margin-bottom:6px}
-.editor-subtitle{color:#999;font-size:12px;margin-bottom:12px}
-.edit-row{display:flex;gap:10px;max-width:1100px;margin:auto;flex-direction:column}
-#editPrompt{flex:1;min-height:60px;resize:vertical;padding:12px;border-radius:12px;border:1px solid #34343e;background:#191920;color:#fff;outline:none;font-size:14px}
-#editPrompt:focus{border-color:#9b5cff}
-#editBtn{background:#9b5cff;color:#fff;padding:14px;border-radius:12px;width:100%;font-size:15px}
-#status{text-align:center;padding:10px;font-size:13px;color:#bdbdc8;min-height:36px}
-.publish-result{display:none;max-width:900px;margin:12px auto 0;padding:14px;background:#102518;border:1px solid #1f7a3a;border-radius:12px}
-.publish-link-row{display:flex;gap:8px;flex-direction:column;margin-top:8px}
-#publishedUrl{width:100%;background:#07140b;color:#9df3b1;border:1px solid #285d37;border-radius:8px;padding:10px;font-size:13px;outline:none}
-.copy-btn{background:#16a34a;color:#fff;padding:10px;border-radius:8px;width:100%}
-.open-btn{background:#2563eb;color:#fff;padding:10px;border-radius:8px;width:100%}
-.preview-wrapper{background:#222;padding:12px;min-height:50vh}
-.preview-container{background:#fff;width:100%;max-width:1400px;margin:auto;border-radius:12px;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,.4)}
-#websitePreview{width:100%;height:70vh;border:none;display:block;background:#fff;overflow:auto}
-.empty{min-height:50vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:30px}
-.empty h2{font-size:24px;margin-bottom:8px}.empty p{color:#aaa;margin-bottom:16px;font-size:14px}
-.create-btn{background:#9b5cff;color:#fff;padding:12px 20px;border-radius:10px}
-.loading{position:fixed;inset:0;background:rgba(5,5,8,.85);display:none;align-items:center;justify-content:center;z-index:500;text-align:center}
-.loading-box{background:#17171e;padding:28px;border-radius:16px;border:1px solid #30303a}
-.spinner{width:40px;height:40px;border:4px solid #333;border-top-color:#9b5cff;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 12px}
-@keyframes spin{to{transform:rotate(360deg)}}
-.debug-box{background:#1a1a2e;color:#888;padding:10px 14px;font-size:11px;border-radius:8px;margin:10px auto 0;max-width:900px;border:1px solid #292932;word-break:break-all}
-@media(min-width:700px){
-.topbar{padding:12px 20px}
-.top-buttons button{font-size:14px;padding:11px 16px}
-.edit-row{flex-direction:row}
-#editBtn{width:auto;min-width:150px}
-.publish-link-row{flex-direction:row}
-.copy-btn,.open-btn{width:auto}
-.preview-wrapper{padding:20px}
-#websitePreview{height:75vh}
+export default {
+  async fetch(request, env, ctx) {
+    const url = new URL(request.url);
+    const path = url.pathname;
+
+    // CORS headers
+    const cors = {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type",
+    };
+
+    if (request.method === "OPTIONS") {
+      return new Response(null, { headers: cors });
+    }
+
+    // === SERVE PUBLISHED SITE ===
+    if (path.startsWith("/site/")) {
+      const slug = path.replace("/site/", "").replace(/\/$/, "");
+      if (!slug) return new Response("Not found", { status: 404 });
+      
+      const html = await env.SITES.get(slug);
+      if (!html) return new Response("Site not found", { status: 404 });
+      
+      return new Response(html, {
+        headers: { "Content-Type": "text/html; charset=utf-8", ...cors },
+      });
+    }
+
+    // === PUBLISH ===
+    if (path === "/publish") {
+      if (request.method !== "POST") {
+        return new Response("Method not allowed", { status: 405, headers: cors });
+      }
+      try {
+        const { slug, website } = await request.json();
+        if (!slug || !website) {
+          return jsonResponse({ success: false, error: "Missing slug or website" }, 400, cors);
+        }
+        const cleanSlug = slug.toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+        if (!cleanSlug || cleanSlug.length < 2) {
+          return jsonResponse({ success: false, error: "Invalid slug" }, 400, cors);
+        }
+        await env.SITES.put(cleanSlug, website);
+        return jsonResponse({ success: true, slug: cleanSlug }, 200, cors);
+      } catch (e) {
+        return jsonResponse({ success: false, error: e.message }, 500, cors);
+      }
+    }
+
+    // === GENERATE / EDIT ===
+    if (request.method !== "POST") {
+      return new Response("Method not allowed", { status: 405, headers: cors });
+    }
+
+    try {
+      const body = await request.json();
+      const { mode, prompt, website } = body;
+
+      let systemPrompt = `You are an expert web developer. You create complete, beautiful, responsive websites as a SINGLE HTML file.
+
+CRITICAL RULES:
+1. Output ONLY raw HTML. No markdown code blocks. No \`\`\`html. No explanations.
+2. The HTML must be COMPLETE with ALL sections the user requests.
+3. Use inline CSS inside <style> tags. No external CSS files.
+4. For images, use https://picsum.photos/seed/{keyword}/width/height format. Example: <img src="https://picsum.photos/seed/cleaning/800/500" alt="cleaning">
+5. Make the website mobile-responsive with @media queries.
+6. Include a navigation menu, hero section, and footer.
+7. Use modern, professional design with good colors and spacing.
+8. Do NOT use height: 100vh on body or html - use min-height instead.
+9. Ensure all text is readable and layouts don't break on mobile.
+10. If editing, preserve all existing content and only change what the user asks.`;
+
+      let userPrompt;
+      if (mode === "edit" && website) {
+        userPrompt = `Here is the current website HTML:\n\n${website}\n\nThe user wants this change: ${prompt}\n\nReturn the COMPLETE updated HTML. Remember: NO markdown, ONLY raw HTML, include all sections, use picsum.photos for images.`;
+      } else {
+        userPrompt = `Create a complete, professional website for: ${prompt}\n\nReturn the COMPLETE HTML. Remember: NO markdown, ONLY raw HTML, include all sections, use picsum.photos for images.`;
+      }
+
+      const aiResponse = await env.AI.run("@cf/qwen/qwen2.5-14b-instruct", {
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+        max_tokens: 4000,
+      });
+
+      let generated = aiResponse.response || "";
+
+      // Clean up any markdown wrapping
+      generated = generated.replace(/```html\s*/gi, "");
+      generated = generated.replace(/```\s*$/gi, "");
+      generated = generated.replace(/^\s*html\s*/i, "");
+      generated = generated.trim();
+
+      // Validate it's HTML
+      if (!generated.includes("<html") && !generated.includes("<!DOCTYPE")) {
+        return jsonResponse({ success: false, error: "AI did not return valid HTML. Try again." }, 500, cors);
+      }
+
+      return jsonResponse({ success: true, website: generated }, 200, cors);
+
+    } catch (error) {
+      console.error(error);
+      return jsonResponse({ success: false, error: error.message }, 500, cors);
+    }
+  },
+};
+
+function jsonResponse(data, status, cors) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { "Content-Type": "application/json", ...cors },
+  });
 }
-</style>
-</head>
-<body>
-
-<header class="topbar">
-<div class="logo">✨ WebCraft <span>AI</span></div>
-<div class="top-buttons">
-<button class="back-btn" onclick="goBack()">← Back</button>
-<button class="download-btn" onclick="downloadWebsite()">📥 Download</button>
-<button id="publishBtn" class="publish-btn" onclick="publishWebsite()">🚀 Publish</button>
-</div>
-</header>
-
-<section class="editor">
-<div class="editor-title">✏️ Edit your website with AI</div>
-<div class="editor-subtitle">Tell WebCraft AI what you want to change.</div>
-<div class="edit-row">
-<textarea id="editPrompt" placeholder="Example: Change colors to blue and white. Add WhatsApp button."></textarea>
-<button id="editBtn" onclick="editWebsite()">✨ Edit Website</button>
-</div>
-<div id="status"></div>
-<div id="debugBox" class="debug-box" style="display:none"><strong>Debug:</strong> <span id="debugText"></span></div>
-
-<div id="publishResult" class="publish-result">
-<div style="font-weight:bold;margin-bottom:4px">🎉 Your website is live!</div>
-<div class="publish-link-row">
-<input id="publishedUrl" type="text" readonly>
-<button class="copy-btn" onclick="copyPublishedUrl()">📋 Copy</button>
-<button class="open-btn" onclick="openPublishedWebsite()">🌐 Open</button>
-</div>
-</div>
-</section>
-
-<main class="preview-wrapper">
-<div id="emptyState" class="empty" style="display:none">
-<h2>No website found</h2>
-<p>Generate a website first before opening the preview.</p>
-<button class="create-btn" onclick="goBack()">✨ Create Website</button>
-</div>
-<div id="previewContainer" class="preview-container">
-<iframe id="websitePreview" title="Generated Website" scrolling="yes"></iframe>
-</div>
-</main>
-
-<div id="loading" class="loading">
-<div class="loading-box">
-<div class="spinner"></div>
-<div id="loadingText">🧠 AI is working...</div>
-</div>
-</div>
-
-<script>
-const AI_URL="https://ai-website-maker.lutaayacyrus76.workers.dev/";
-let preview=document.getElementById("websitePreview");
-const editPrompt=document.getElementById("editPrompt");
-const editBtn=document.getElementById("editBtn");
-const publishBtn=document.getElementById("publishBtn");
-const status=document.getElementById("status");
-const loading=document.getElementById("loading");
-const loadingText=document.getElementById("loadingText");
-const previewContainer=document.getElementById("previewContainer");
-const emptyState=document.getElementById("emptyState");
-const publishResult=document.getElementById("publishResult");
-const publishedUrl=document.getElementById("publishedUrl");
-const debugBox=document.getElementById("debugBox");
-const debugText=document.getElementById("debugText");
-
-function cleanHtml(h){if(!h)return h;h=h.replace(/```html\s*/gi,"");h=h.replace(/```\s*$/gi,"");return h.trim()}
-
-function showDebug(msg){debugBox.style.display="block";debugText.textContent=msg;}
-
-// Inject preview fixer CSS to override 100vh/overflow:hidden that breaks iframes
-function injectPreviewFixer(html){
-const fixer=`<style id="wc-preview-fix">
-/* WebCraft Preview Fixer - ensures full content shows in iframe */
-html,body{height:auto!important;min-height:100%!important;overflow:visible!important;overflow-x:hidden!important}
-body{position:relative!important}
-*{max-width:100%!important;box-sizing:border-box!important}
-img,video,iframe,embed{max-width:100%!important;height:auto!important}
-section,div,article,main,header,footer{height:auto!important;min-height:auto!important}
-</style>`;
-// Insert before </head> if head exists, otherwise prepend to body/start
-if(html.includes("</head>")){
-return html.replace("</head>",fixer+"</head>");
-}
-return fixer+html;
-}
-
-function loadPreview(html){
-html=cleanHtml(html);
-const raw=localStorage.getItem("generatedWebsite");
-showDebug("Storage: "+(raw?raw.length:0)+" chars | Cleaned: "+(html?html.length:0)+" chars");
-
-if(!html||html.length<50){
-previewContainer.style.display="none";
-emptyState.style.display="flex";
-publishBtn.disabled=true;
-status.textContent="⚠️ No website data found.";
-showDebug("No valid HTML found.");
-return;
-}
-
-previewContainer.style.display="block";
-emptyState.style.display="none";
-publishBtn.disabled=false;
-
-// Inject fixer then load
-html=injectPreviewFixer(html);
-
-// Use document.write for mobile compatibility
-try{
-preview.src="about:blank";
-setTimeout(()=>{
-try{
-const doc=preview.contentDocument||preview.contentWindow.document;
-doc.open();
-doc.write(html);
-doc.close();
-showDebug("Preview loaded ("+html.length+" chars) with fixer injected");
-}catch(e){
-// Fallback to blob
-const blob=new Blob([html],{type:"text/html"});
-preview.src=URL.createObjectURL(blob);
-showDebug("Fallback Blob used");
-}
-},50);
-}catch(e){
-status.textContent="❌ Preview error: "+e.message;
-showDebug("Error: "+e.message);
-}
-}
-
-let website=localStorage.getItem("generatedWebsite");
-if(!website){
-previewContainer.style.display="none";
-emptyState.style.display="flex";
-publishBtn.disabled=true;
-showDebug("localStorage empty.");
-}else{
-website=cleanHtml(website);
-localStorage.setItem("generatedWebsite",website);
-loadPreview(website);
-}
-
-const savedUrl=localStorage.getItem("publishedUrl");
-if(savedUrl){publishedUrl.value=savedUrl;publishResult.style.display="block";}
-
-async function editWebsite(){
-const instruction=editPrompt.value.trim();
-if(!instruction){status.textContent="⚠️ Tell the AI what to change.";return}
-if(!website){status.textContent="❌ No website to edit.";return}
-editBtn.disabled=true;publishBtn.disabled=true;editBtn.textContent="Editing...";
-loadingText.textContent="🧠 AI is updating...";loading.style.display="flex";status.textContent="Updating...";
-try{
-const r=await fetch(AI_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({mode:"edit",prompt:instruction,website:website})});
-const d=await r.json();
-if(!r.ok||!d.success)throw new Error(d.error||"Edit failed");
-website=cleanHtml(d.website);
-localStorage.setItem("generatedWebsite",website);
-localStorage.setItem("websitePrompt",instruction);
-loadPreview(website);
-editPrompt.value="";
-publishResult.style.display="none";
-localStorage.removeItem("publishedUrl");
-status.textContent="✅ Updated!";
-}catch(e){console.error(e);status.textContent="❌ "+e.message}
-finally{editBtn.disabled=false;publishBtn.disabled=false;editBtn.textContent="✨ Edit Website";loading.style.display="none"}
-}
-
-async function publishWebsite(){
-if(!website){status.textContent="❌ No website to publish.";return}
-let name=prompt("Enter site name (letters, numbers, hyphens only):\nExample: cyrus-cuts");
-if(!name)return;
-name=name.trim().toLowerCase().replace(/[^a-z0-9-]/g,"-").replace(/-+/g,"-").replace(/^-|-$/g,"");
-if(!name){status.textContent="⚠️ Invalid name.";return}
-publishBtn.disabled=true;editBtn.disabled=true;publishBtn.textContent="Publishing...";
-loadingText.textContent="🚀 Publishing...";loading.style.display="flex";status.textContent="Saving online...";
-try{
-const r=await fetch(AI_URL+"publish",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({slug:name,website:website})});
-const d=await r.json();
-if(!r.ok||!d.success)throw new Error(d.error||"Publish failed");
-const url=AI_URL+"site/"+name;
-publishedUrl.value=url;publishResult.style.display="block";localStorage.setItem("publishedUrl",url);
-status.textContent="✅ Live!";
-}catch(e){console.error(e);status.textContent="❌ "+e.message}
-finally{publishBtn.disabled=false;editBtn.disabled=false;publishBtn.textContent="🚀 Publish";loading.style.display="none"}
-}
-
-function downloadWebsite(){
-if(!website){status.textContent="❌ Nothing to download.";return}
-const h=cleanHtml(website),blob=new Blob([h],{type:"text/html"}),url=URL.createObjectURL(blob);
-const a=document.createElement("a");a.href=url;a.download="my-website.html";document.body.appendChild(a);a.click();document.body.removeChild(a);
-URL.revokeObjectURL(url);status.textContent="✅ Downloaded!";
-}
-
-function copyPublishedUrl(){
-const u=publishedUrl.value;if(!u)return;
-if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(u).then(()=>status.textContent="✅ Copied!").catch(()=>fallback())}else fallback();
-function fallback(){publishedUrl.select();document.execCommand("copy");status.textContent="✅ Copied!";}
-}
-
-function openPublishedWebsite(){const u=publishedUrl.value;if(u)window.open(u,"_blank");}
-function goBack(){window.location.href="index.html";}
-</script>
-</body>
-</html>
+  
