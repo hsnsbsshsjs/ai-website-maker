@@ -1,131 +1,65 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WebCraft AI - Website Generator</title>
-<style>
-*{box-sizing:border-box}
-body{margin:0;font-family:Arial,sans-serif;background:#0b0b10;color:#fff;min-height:100vh}
-.container{max-width:800px;margin:auto;padding:20px}
-.logo{text-align:center;font-size:28px;font-weight:bold;margin-bottom:8px}
-.logo span{color:#9b5cff}
-.subtitle{text-align:center;color:#999;margin-bottom:30px;font-size:14px}
-.card{background:#111118;border:1px solid #292932;border-radius:16px;padding:20px;margin-bottom:20px}
-label{display:block;font-size:14px;font-weight:bold;margin-bottom:8px;color:#ddd}
-textarea{width:100%;min-height:120px;padding:14px;border-radius:12px;border:1px solid #34343e;background:#191920;color:#fff;font-size:15px;outline:none;resize:vertical}
-textarea:focus{border-color:#9b5cff}
-textarea::placeholder{color:#666}
-.gen-btn{width:100%;background:#9b5cff;color:#fff;padding:16px;border:none;border-radius:12px;font-size:16px;font-weight:bold;cursor:pointer;margin-top:12px}
-.gen-btn:hover{opacity:.9}
-.gen-btn:disabled{opacity:.5;cursor:not-allowed}
-.loading{display:none;text-align:center;padding:40px}
-.spinner{width:45px;height:45px;border:4px solid #333;border-top-color:#9b5cff;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 15px}
-@keyframes spin{to{transform:rotate(360deg)}}
-.error{color:#ff6b6b;text-align:center;padding:10px}
-.success{color:#51cf66;text-align:center;padding:10px}
-.tips{background:#1a1a2e;border:1px solid #292932;border-radius:12px;padding:16px;margin-top:20px}
-.tips h3{margin:0 0 10px;font-size:15px}
-.tips ul{margin:0;padding-left:18px;color:#aaa;font-size:13px}
-.tips li{margin-bottom:6px}
-</style>
-</head>
-<body>
-<div class="container">
-<div class="logo">✨ WebCraft <span>AI</span></div>
-<div class="subtitle">Build professional websites with AI — free, on your phone</div>
+<!DOCTYPE html>  <html lang="en">  
+<head>  
+    <meta charset="UTF-8">  
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">  <title>WebCraft AI</title>  
 
-<div class="card">
-<label>📝 Describe your website</label>
-<textarea id="prompt" placeholder="Example: 
-Create a professional website for 'A Class Cleaning Company' in Kampala, Uganda. 
-Include: hero section with a cleaning team photo, services (home cleaning, office cleaning, carpet cleaning), 
-about us, pricing packages, testimonials, FAQ, contact form with WhatsApp button, 
-and a gallery. Use blue and white colors."></textarea>
-<button id="genBtn" class="gen-btn" onclick="generate()">✨ Generate Website</button>
-<div id="status"></div>
-</div>
+<link rel="stylesheet" href="style.css">
 
-<div id="loading" class="loading">
-<div class="spinner"></div>
-<div>🧠 AI is building your website...</div>
-<div style="color:#888;font-size:13px;margin-top:8px">This takes 20-40 seconds</div>
-</div>
+</head>  <body>  <main class="container">  
 
-<div class="tips">
-<h3>💡 Tips for great results:</h3>
-<ul>
-<li>Include your business name and location</li>
-<li>List all sections you want (Hero, About, Services, Pricing, Contact...)</li>
-<li>Mention colors and style (modern, elegant, playful)</li>
-<li>Add "Include WhatsApp button" if you want one</li>
-</ul>
-</div>
-</div>
+    <div class="logo">✨ WebCraft AI</div>  
 
-<script>
-const AI_URL="https://ai-website-maker.lutaayacyrus76.workers.dev/";
-const promptEl=document.getElementById("prompt");
-const genBtn=document.getElementById("genBtn");
-const statusEl=document.getElementById("status");
-const loadingEl=document.getElementById("loading");
+    <h1>  
+        Build a website<br>  
+        <span>with AI</span>  
+    </h1>  
 
-function isValidHtml(html){
-if(!html)return false;
-html=html.trim();
-if(html.startsWith("export default"))return false;
-if(html.startsWith("const "))return false;
-if(html.startsWith("function "))return false;
-if(html.startsWith("async "))return false;
-if(html.includes("async fetch"))return false;
-return html.includes("<html")||html.includes("<!DOCTYPE")||html.includes("<body")||html.includes("<div");
-}
+    <p class="subtitle">  
+        Describe the website you want and let AI create it for you.  
+    </p>  
 
-async function generate(){
-const prompt=promptEl.value.trim();
-if(!prompt){statusEl.textContent="⚠️ Please describe your website.";statusEl.className="error";return}
+    <div class="creator-box">  
 
-genBtn.disabled=true;
-loadingEl.style.display="block";
-statusEl.textContent="";
-document.querySelector(".card").style.display="none";
-document.querySelector(".tips").style.display="none";
+        <textarea  
+            id="prompt"  
+            placeholder="Describe your website...
 
-try{
-const res=await fetch(AI_URL,{
-method:"POST",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify({mode:"create",prompt:prompt})
-});
-const data=await res.json();
+Example:
+Create a modern barber shop website called Cyrus Cuts. Include services, prices, an about section, gallery and contact information."
+></textarea>
 
-if(!res.ok||!data.success||!data.website){
-throw new Error(data.error||"Generation failed. Try again.");
-}
+<button id="generateBtn">  
+            ✨ Generate Website  
+        </button>  
 
-let html=data.website;
-html=html.replace(/```html\s*/gi,"").replace(/```\s*$/gi,"").trim();
+    </div>  
 
-if(!isValidHtml(html)){
-throw new Error("AI returned invalid code. Please try again with a clearer prompt.");
-}
+    <div class="examples">  
 
-localStorage.setItem("generatedWebsite",html);
-localStorage.setItem("websitePrompt",prompt);
-localStorage.removeItem("publishedUrl");
+        <p>Try an example:</p>  
 
-window.location.href="preview.html";
+        <button class="example"  
+            onclick="useExample('Create a modern restaurant website with a menu, about section and contact information.')">  
+            🍔 Restaurant  
+        </button>  
 
-}catch(err){
-console.error(err);
-statusEl.textContent="❌ "+err.message;
-statusEl.className="error";
-genBtn.disabled=false;
-loadingEl.style.display="none";
-document.querySelector(".card").style.display="block";
-document.querySelector(".tips").style.display="block";
-}
-}
-</script>
-</body>
+        <button class="example"  
+            onclick="useExample('Create a professional personal portfolio website for a web developer.')">  
+            💻 Portfolio  
+        </button>  
+
+        <button class="example"  
+            onclick="useExample('Create a beautiful school website with courses, teachers, news and contact information.')">  
+            🎓 School  
+        </button>  
+
+    </div>  
+
+    <div id="status"></div>  
+
+</main>  
+
+<script src="app.js"></script>
+
+</body>  
 </html>
